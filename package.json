@@ -1,7 +1,7 @@
 {
   "name": "@pokujs/istanbul",
   "private": false,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "☔️ A Poku plugin for Istanbul code coverage.",
   "main": "./lib/index.js",
   "license": "MIT",
@@ -34,6 +34,7 @@
     "postupdate": "npm run lint:fix"
   },
   "dependencies": {
+    "@bcoe/v8-coverage": "^1.0.2",
     "istanbul-lib-coverage": "^3.2.2",
     "istanbul-lib-report": "^3.0.1",
     "istanbul-reports": "^3.2.0",

@@ -97,54 +97,62 @@ export const coverage = (
         { data?: unknown; lineLengths?: number[] }
       > = Object.create(null);
 
+      const processCovs: { result: Profiler.ScriptCoverage[] }[] = [];
+
       for (const file of coverageFiles) {
         const raw = JSON.parse(readFileSync(join(tempDir, file), 'utf8'));
-        const results = (raw.result ?? []) as Profiler.ScriptCoverage[];
 
         if (raw['source-map-cache'])
           Object.assign(sourceMapCache, raw['source-map-cache']);
 
-        for (const entry of results) {
-          let scriptPath = entry.url;
+        if (Array.isArray(raw.result)) processCovs.push({ result: raw.result });
+      }
 
-          if (scriptPath.startsWith('file://'))
-            scriptPath = new URL(scriptPath).pathname;
+      const { mergeProcessCovs } = await import('@bcoe/v8-coverage');
+      const merged = mergeProcessCovs(processCovs) as {
+        result: Profiler.ScriptCoverage[];
+      };
 
-          if (!scriptPath || scriptPath.includes('/node_modules/')) continue;
+      for (const entry of merged.result) {
+        let scriptPath = entry.url;
 
-          const relativePath = scriptPath.startsWith(context.cwd)
-            ? scriptPath.slice(context.cwd.length + 1)
-            : scriptPath;
+        if (scriptPath.startsWith('file://'))
+          scriptPath = new URL(scriptPath).pathname;
 
-          if (include.length > 0) {
-            const matched = include.some((pattern) =>
-              minimatch(relativePath, pattern)
-            );
+        if (!scriptPath || scriptPath.includes('/node_modules/')) continue;
 
-            if (!matched) continue;
-          }
+        const relativePath = scriptPath.startsWith(context.cwd)
+          ? scriptPath.slice(context.cwd.length + 1)
+          : scriptPath;
 
-          if (exclude.some((pattern) => minimatch(relativePath, pattern)))
-            continue;
+        if (include.length > 0) {
+          const matched = include.some((pattern) =>
+            minimatch(relativePath, pattern)
+          );
 
-          try {
-            const sources = getSourcesFromCache(
-              sourceMapCache,
-              pathToFileURL(scriptPath).href
-            );
+          if (!matched) continue;
+        }
 
-            const converter = v8ToIstanbul(
-              scriptPath,
-              0,
-              sources as Parameters<typeof v8ToIstanbul>[2]
-            );
+        if (exclude.some((pattern) => minimatch(relativePath, pattern)))
+          continue;
 
-            await converter.load();
-            converter.applyCoverage(entry.functions);
-            coverageMap.merge(converter.toIstanbul());
-          } catch {
-            // Skip files that can't be converted
-          }
+        try {
+          const sources = getSourcesFromCache(
+            sourceMapCache,
+            pathToFileURL(scriptPath).href
+          );
+
+          const converter = v8ToIstanbul(
+            scriptPath,
+            0,
+            sources as Parameters<typeof v8ToIstanbul>[2]
+          );
+
+          await converter.load();
+          converter.applyCoverage(entry.functions);
+          coverageMap.merge(converter.toIstanbul());
+        } catch {
+          // Skip files that can't be converted
         }
       }
 

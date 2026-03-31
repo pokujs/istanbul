@@ -124,6 +124,28 @@ coverage({
 });
 ```
 
+### Using with `@pokujs/multi-suite`
+
+Place the `coverage` plugin at the **root level**, before `multiSuite`:
+
+```js
+import { coverage } from '@pokujs/istanbul';
+import { multiSuite } from '@pokujs/multi-suite';
+import { defineConfig } from 'poku';
+
+export default defineConfig({
+  plugins: [
+    coverage({ include: ['src/**'] }),
+    multiSuite([
+      defineConfig({ include: ['test/unit'], concurrency: 8 }),
+      defineConfig({ include: ['test/e2e'], sequential: true }),
+    ]),
+  ],
+});
+```
+
+> Since `coverage` sets `NODE_V8_COVERAGE` during `setup`, every test process across all sub-suites writes to the same temp directory — `teardown` then merges everything into a single report.
+
 ---
 
 ## How It Works
