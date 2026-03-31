@@ -1,0 +1,70 @@
+{
+  "name": "@pokujs/istanbul",
+  "private": false,
+  "version": "0.1.0",
+  "description": "☔️ A Poku plugin for Istanbul code coverage.",
+  "main": "./lib/index.js",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pokujs/istanbul.git"
+  },
+  "homepage": "https://poku.io",
+  "bugs": {
+    "url": "https://github.com/pokujs/istanbul/issues"
+  },
+  "author": "https://github.com/wellwelwel",
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/pokujs/istanbul?sponsor=1"
+  },
+  "files": [
+    "lib"
+  ],
+  "engines": {
+    "node": ">=18.x.x"
+  },
+  "scripts": {
+    "test": "poku test/e2e",
+    "prebuild": "rm -rf lib",
+    "build": "tsc",
+    "lint": "prettier --check .",
+    "lint:fix": "prettier --write .github/workflows/*.yml .",
+    "update": "pu minor && npm i && (npm audit fix || true)",
+    "postupdate": "npm run lint:fix"
+  },
+  "dependencies": {
+    "istanbul-lib-coverage": "^3.2.2",
+    "istanbul-lib-report": "^3.0.1",
+    "istanbul-reports": "^3.2.0",
+    "v8-to-istanbul": "^9.3.0"
+  },
+  "peerDependencies": {
+    "poku": "^4.2.0"
+  },
+  "devDependencies": {
+    "@ianvs/prettier-plugin-sort-imports": "^4.7.1",
+    "@types/istanbul-lib-report": "^3.0.3",
+    "@types/istanbul-reports": "^3.0.4",
+    "@types/node": "^25.5.0",
+    "packages-update": "^2.0.0",
+    "poku": "^4.2.0",
+    "prettier": "^3.8.1",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.2"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "🐷",
+    "poku",
+    "pokujs",
+    "testing",
+    "plugin",
+    "coverage",
+    "nyc",
+    "istanbul",
+    "codecov"
+  ]
+}

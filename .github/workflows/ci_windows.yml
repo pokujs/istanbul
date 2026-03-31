@@ -1,0 +1,39 @@
+name: '🪟 CI — Windows'
+
+on:
+  push:
+    branches:
+      - 'main'
+  pull_request:
+    paths:
+      - '.github/workflows/ci_coverage-windows.yml'
+      - 'src/**'
+      - 'test/**'
+      - 'tools/**'
+      - 'package-lock.json'
+      - 'package.json'
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+    name: Windows
+    steps:
+      - name: ➕ Actions - Checkout
+        uses: actions/checkout@v4
+
+      - name: ➕ Actions - Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          check-latest: true
+          node-version: lts/*
+          cache: 'npm'
+
+      - name: 📦 Installing Dependencies
+        run: npm ci
+
+      - name: 🧪 Testing
+        run: npm test
