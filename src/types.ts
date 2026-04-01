@@ -35,6 +35,19 @@ export type CoverageOptions = {
   exclude?: string[];
 
   /**
+   * Include files that were never loaded by any test (reported as 0% coverage).
+   *
+   * Use `src` to control which directories are scanned.
+   */
+  all?: boolean;
+
+  /** Directories to scan when `all` is `true`. */
+  src?: string[];
+
+  /** Delete previous coverage data before running. */
+  clean?: boolean;
+
+  /**
    * Enforce coverage thresholds.
    *
    * - `true` — check using individual `lines`, `branches`, `functions`, and `statements` values.

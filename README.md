@@ -56,6 +56,10 @@ coverage({
   include: ['src/**'], // default: [] (all files)
   exclude: ['**/*.test.ts'], // default: []
 
+  // Include untested files
+  all: true, // default: false
+  src: ['src'], // default: [cwd]
+
   // Thresholds
   checkCoverage: true, // default: false
   lines: 80, // default: 0
@@ -68,6 +72,7 @@ coverage({
   reportsDirectory: './coverage', // default: './coverage'
   tempDirectory: '.v8-coverage', // default: auto (temp dir)
   skipFull: false, // default: false
+  clean: true, // default: true
 
   // Report coloring
   watermarks: {

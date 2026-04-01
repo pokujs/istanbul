@@ -1,11 +1,18 @@
 import type { Profiler } from 'node:inspector';
 import type { PokuPlugin } from 'poku/plugins';
 import type { CoverageOptions } from './types.js';
-import { mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import {
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { isAbsolute, join, resolve } from 'node:path';
 import process from 'node:process';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 export type { CoverageOptions } from './types.js';
 
@@ -32,6 +39,7 @@ const getSourcesFromCache = (
 const minimatch = (path: string, pattern: string): boolean => {
   const regex = pattern
     .replace(/\./g, '\\.')
+    .replace(/\*\*\//g, '(.+/)?')
     .replace(/\*\*/g, '.*')
     .replace(/(?<!\.)(\*)/g, '[^/]*');
 
@@ -60,6 +68,15 @@ export const coverage = (
       tempDir = userProvidedTempDir
         ? options.tempDirectory!
         : mkdtempSync(join(tmpdir(), 'poku-istanbul-'));
+
+      if (userProvidedTempDir && options.clean !== false) {
+        try {
+          rmSync(tempDir, { recursive: true, force: true });
+        } catch {
+          // Best-effort cleanup
+        }
+        mkdirSync(tempDir, { recursive: true });
+      }
 
       process.env.NODE_V8_COVERAGE = tempDir;
     },
@@ -105,21 +122,101 @@ export const coverage = (
         if (raw['source-map-cache'])
           Object.assign(sourceMapCache, raw['source-map-cache']);
 
-        if (Array.isArray(raw.result)) processCovs.push({ result: raw.result });
+        if (!Array.isArray(raw.result)) continue;
+
+        const normalized: Profiler.ScriptCoverage[] = [];
+
+        for (const entry of raw.result as Profiler.ScriptCoverage[]) {
+          if (/^node:/.test(entry.url)) continue;
+
+          if (entry.url.startsWith('file://')) {
+            try {
+              entry.url = fileURLToPath(entry.url);
+            } catch {
+              continue;
+            }
+          }
+
+          if (isAbsolute(entry.url)) normalized.push(entry);
+        }
+
+        processCovs.push({ result: normalized });
       }
 
       const { mergeProcessCovs } = await import('@bcoe/v8-coverage');
-      const merged = mergeProcessCovs(processCovs) as {
+      let merged = mergeProcessCovs(processCovs) as {
         result: Profiler.ScriptCoverage[];
       };
 
+      if (options.all) {
+        const coveredPaths = new Set(merged.result.map((r) => r.url));
+        const srcDirs = options.src ?? [context.cwd];
+        const emptyEntries: Profiler.ScriptCoverage[] = [];
+
+        for (const srcDir of srcDirs) {
+          const absDir = resolve(context.cwd, srcDir);
+          let dirEntries: { name: string; isDirectory(): boolean }[];
+
+          try {
+            dirEntries = readdirSync(absDir, {
+              withFileTypes: true,
+              recursive: true,
+            });
+          } catch {
+            continue;
+          }
+
+          for (const dirEntry of dirEntries) {
+            if (dirEntry.isDirectory()) continue;
+
+            const fullPath = join(
+              (dirEntry as { parentPath?: string }).parentPath ??
+                (dirEntry as unknown as { path: string }).path,
+              dirEntry.name
+            );
+
+            if (fullPath.includes('/node_modules/')) continue;
+            if (coveredPaths.has(fullPath)) continue;
+
+            const relativePath = fullPath.startsWith(context.cwd)
+              ? fullPath.slice(context.cwd.length + 1)
+              : fullPath;
+
+            if (include.length > 0) {
+              if (!include.some((p) => minimatch(relativePath, p))) continue;
+            }
+            if (exclude.some((p) => minimatch(relativePath, p))) continue;
+
+            try {
+              const size = statSync(fullPath).size;
+              emptyEntries.push({
+                scriptId: '0',
+                url: fullPath,
+                functions: [
+                  {
+                    functionName: '(empty-report)',
+                    ranges: [{ startOffset: 0, endOffset: size, count: 0 }],
+                    isBlockCoverage: true,
+                  },
+                ],
+              });
+            } catch {
+              // Skip inaccessible files
+            }
+          }
+        }
+
+        if (emptyEntries.length > 0) {
+          merged = mergeProcessCovs([{ result: emptyEntries }, merged]) as {
+            result: Profiler.ScriptCoverage[];
+          };
+        }
+      }
+
       for (const entry of merged.result) {
-        let scriptPath = entry.url;
+        const scriptPath = entry.url;
 
-        if (scriptPath.startsWith('file://'))
-          scriptPath = new URL(scriptPath).pathname;
-
-        if (!scriptPath || scriptPath.includes('/node_modules/')) continue;
+        if (scriptPath.includes('/node_modules/')) continue;
 
         const relativePath = scriptPath.startsWith(context.cwd)
           ? scriptPath.slice(context.cwd.length + 1)
