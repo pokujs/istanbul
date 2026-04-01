@@ -69,7 +69,7 @@ export const coverage = (
         ? options.tempDirectory!
         : mkdtempSync(join(tmpdir(), 'poku-istanbul-'));
 
-      if (userProvidedTempDir && options.clean !== false) {
+      if (options.clean !== false) {
         try {
           rmSync(tempDir, { recursive: true, force: true });
         } catch {
