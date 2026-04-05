@@ -15,6 +15,26 @@ type KnownReporter =
 type Reporter = KnownReporter | (string & NonNullable<unknown>);
 
 export type CoverageOptions = {
+  /**
+   * Path to a JSONC/JSON configuration file.
+   *
+   * - `string` — load that specific file
+   * - `false` — disable config file discovery
+   * - `undefined` (default) — auto-discover `.nycrc`, `.nycrc.json`,
+   *   or `.nycrc.jsonc`, walking up from `cwd`.
+   */
+  config?: string | false;
+
+  /**
+   * Require the `--coverage` CLI flag to activate coverage collection.
+   *
+   * When `true`, coverage only runs if `--coverage` is passed to the CLI.
+   * When `false`, coverage runs whenever the plugin is active.
+   *
+   * @default false
+   */
+  requireFlag?: boolean;
+
   /** Coverage reporters to use. */
   reporter?: Reporter | Reporter[];
 

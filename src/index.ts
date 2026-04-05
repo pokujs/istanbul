@@ -13,6 +13,7 @@ import { tmpdir } from 'node:os';
 import { isAbsolute, join, resolve } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { loadConfig } from './config.js';
 
 export type { CoverageOptions } from './types.js';
 
@@ -49,6 +50,7 @@ const minimatch = (path: string, pattern: string): boolean => {
 export const coverage = (
   options: CoverageOptions = Object.create(null)
 ): PokuPlugin => {
+  let enabled = false;
   let tempDir: string;
   let originalEnv: string | undefined;
   let userProvidedTempDir: boolean;
@@ -57,6 +59,16 @@ export const coverage = (
     name: '@pokujs/istanbul',
 
     setup(context) {
+      if (options.requireFlag && !process.argv.includes('--coverage')) return;
+      enabled = true;
+
+      const cliConfig = process.argv
+        .find((arg) => arg.startsWith('--coverage-config'))
+        ?.split('=')[1];
+
+      const fileConfig = loadConfig(context.cwd, cliConfig ?? options.config);
+      options = { ...fileConfig, ...options };
+
       if (context.runtime !== 'node')
         console.warn(
           `[@pokujs/istanbul] Istanbul coverage is only supported on Node.js (current runtime: ${context.runtime}). Coverage data may not be collected.`
@@ -82,6 +94,8 @@ export const coverage = (
     },
 
     async teardown(context) {
+      if (!enabled) return;
+
       originalEnv !== undefined
         ? (process.env.NODE_V8_COVERAGE = originalEnv)
         : delete process.env.NODE_V8_COVERAGE;
@@ -313,6 +327,14 @@ export const coverage = (
 
         for (const [summary, label] of summaries)
           checkThresholds(summary, label);
+
+        if (process.exitCode === 1) {
+          const coverageFailure = () => {
+            process.exitCode = 1;
+          };
+
+          process.once('exit', coverageFailure);
+        }
       }
 
       if (!userProvidedTempDir) {
