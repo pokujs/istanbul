@@ -15,6 +15,10 @@ Enjoying **Poku**? [Give him a star to show your support](https://github.com/wel
 
 ☔️ [**@pokujs/istanbul**](https://github.com/pokujs/istanbul) is a **Poku** plugin for **Istanbul** code coverage.
 
+> [!TIP]
+>
+> **@pokujs/istanbul** supports **JSONC** config files (`.nycrc`, etc.) out of the box, allowing comments in your configuration. You can also use **JS** and **TS** by setting the options directly in the plugin.
+
 ---
 
 ## Quickstart
@@ -49,6 +53,12 @@ That's it! Run `poku` and a coverage summary will be printed after your test res
 
 ```js
 coverage({
+  // Config file (.nycrc, .nycrc.json, .nycrc.jsonc)
+  config: '.nycrc', // default: auto-discover
+
+  // Activation
+  requireFlag: true, // default: false
+
   // Reporters
   reporter: ['text', 'lcov'], // default: ['text']
 
@@ -128,6 +138,61 @@ coverage({
   statements: 95,
 });
 ```
+
+### Require `--coverage` flag
+
+By default, coverage runs whenever the plugin is active. Use `requireFlag` to only collect coverage when `--coverage` is passed to the CLI, keeping watch mode, debugging, and filtered runs fast:
+
+```js
+coverage({
+  include: ['src/**'],
+  requireFlag: true,
+});
+```
+
+```bash
+# No coverage (plugin is a no-op)
+poku test/
+
+# With coverage
+poku --coverage test/
+```
+
+### Using a config file
+
+Reuse your existing `.nycrc` or any JSON/JSONC config file with comments:
+
+```jsonc
+// .nycrc
+{
+  // Only cover source files
+  "include": ["src/**"],
+  "reporter": ["text", "lcov"],
+  "check-coverage": true,
+  "lines": 90,
+}
+```
+
+```js
+coverage({
+  config: '.nycrc', // or false to disable auto-discovery
+});
+```
+
+When no `config` is specified, the plugin automatically searches for `.nycrc`, `.nycrc.json`, or `.nycrc.jsonc` in the working directory.
+
+You can also specify the config path via CLI:
+
+```bash
+poku --coverage-config=.nycrc test/
+```
+
+> [!NOTE]
+>
+> **Priority order:**
+>
+> - For config file discovery: `--coverage-config` (CLI) > `config` (plugin option) > auto-discovery
+> - For coverage options: plugin options > config file options
 
 ### Using with `@pokujs/multi-suite`
 
