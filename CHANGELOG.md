@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/pokujs/istanbul/compare/v1.0.0...v1.0.1) (2026-04-06)
+
+
+### Bug Fixes
+
+* fix `--coverageConfig` flag name ([e681c3b](https://github.com/pokujs/istanbul/commit/e681c3b16d754d5a133c06a64b0242a5434d0406))
+
 ## 1.0.0 (2026-04-06)
 
 

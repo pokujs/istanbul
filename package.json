@@ -1,7 +1,7 @@
 {
   "name": "@pokujs/istanbul",
   "private": false,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "☔️ A Poku plugin for Istanbul code coverage.",
   "main": "./lib/index.js",
   "license": "MIT",
