@@ -17,6 +17,8 @@ import { loadConfig } from './config.js';
 
 export type { CoverageOptions } from './types.js';
 
+const toForwardSlash = (p: string): string => p.replace(/\\/g, '/');
+
 const getSourcesFromCache = (
   cache: Record<string, { data?: unknown; lineLengths?: number[] }>,
   url: string
@@ -38,13 +40,14 @@ const getSourcesFromCache = (
 };
 
 const minimatch = (path: string, pattern: string): boolean => {
+  const normalizedPath = toForwardSlash(path);
   const regex = pattern
     .replace(/\./g, '\\.')
     .replace(/\*\*\//g, '(.+/)?')
     .replace(/\*\*/g, '.*')
     .replace(/(?<!\.)(\*)/g, '[^/]*');
 
-  return new RegExp(`^${regex}$`).test(path);
+  return new RegExp(`^${regex}$`).test(normalizedPath);
 };
 
 export const coverage = (
@@ -189,12 +192,14 @@ export const coverage = (
               dirEntry.name
             );
 
-            if (fullPath.includes('/node_modules/')) continue;
+            if (toForwardSlash(fullPath).includes('/node_modules/')) continue;
             if (coveredPaths.has(fullPath)) continue;
 
-            const relativePath = fullPath.startsWith(context.cwd)
-              ? fullPath.slice(context.cwd.length + 1)
-              : fullPath;
+            const relativePath = toForwardSlash(
+              fullPath.startsWith(context.cwd)
+                ? fullPath.slice(context.cwd.length + 1)
+                : fullPath
+            );
 
             if (include.length > 0) {
               if (!include.some((p) => minimatch(relativePath, p))) continue;
@@ -230,11 +235,13 @@ export const coverage = (
       for (const entry of merged.result) {
         const scriptPath = entry.url;
 
-        if (scriptPath.includes('/node_modules/')) continue;
+        if (toForwardSlash(scriptPath).includes('/node_modules/')) continue;
 
-        const relativePath = scriptPath.startsWith(context.cwd)
-          ? scriptPath.slice(context.cwd.length + 1)
-          : scriptPath;
+        const relativePath = toForwardSlash(
+          scriptPath.startsWith(context.cwd)
+            ? scriptPath.slice(context.cwd.length + 1)
+            : scriptPath
+        );
 
         if (include.length > 0) {
           const matched = include.some((pattern) =>
