@@ -67,7 +67,6 @@
     "plugin",
     "coverage",
     "nyc",
-    "istanbul",
-    "codecov"
+    "istanbul"
   ]
 }
