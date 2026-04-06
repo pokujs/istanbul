@@ -184,14 +184,14 @@ When no `config` is specified, the plugin automatically searches for `.nycrc`, `
 You can also specify the config path via CLI:
 
 ```bash
-poku --coverage-config=.nycrc test/
+poku --coverageConfig=.nycrc test/
 ```
 
 > [!NOTE]
 >
 > **Priority order:**
 >
-> - For config file discovery: `--coverage-config` (CLI) > `config` (plugin option) > auto-discovery
+> - For config file discovery: `--coverageConfig` (CLI) > `config` (plugin option) > auto-discovery
 > - For coverage options: plugin options > config file options
 
 ### Using with `@pokujs/multi-suite`
