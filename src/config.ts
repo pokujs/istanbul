@@ -2,6 +2,8 @@ import type { CoverageOptions } from './types.js';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { JSONC } from 'jsonc.min';
+import { parse as tomlParse } from 'toml.min';
+import { parse as yamlParse } from 'yaml.min';
 
 const kebabMap: Record<string, string> = {
   'reports-dir': 'reportsDirectory',
@@ -10,6 +12,40 @@ const kebabMap: Record<string, string> = {
   'check-coverage': 'checkCoverage',
   'per-file': 'perFile',
   'skip-full': 'skipFull',
+};
+
+const scriptExtensions = new Set([
+  '.js',
+  '.mjs',
+  '.cjs',
+  '.ts',
+  '.mts',
+  '.cts',
+]);
+
+const isScript = (path: string): boolean =>
+  scriptExtensions.has(getExtension(path));
+
+const isToml = (path: string): boolean => getExtension(path) === '.toml';
+
+const isYaml = (path: string): boolean => {
+  const ext = getExtension(path);
+  return ext === '.yml' || ext === '.yaml';
+};
+
+const getExtension = (filePath: string): string => {
+  const dotIndex = filePath.lastIndexOf('.');
+  if (dotIndex === -1) return '';
+  return filePath.slice(dotIndex);
+};
+
+const parseConfig = (
+  content: string,
+  filePath: string
+): Record<string, unknown> => {
+  if (isToml(filePath)) return tomlParse(content) as Record<string, unknown>;
+  if (isYaml(filePath)) return yamlParse(content) as Record<string, unknown>;
+  return JSONC.parse(content) as Record<string, unknown>;
 };
 
 const mapKeys = (raw: Record<string, unknown>): Partial<CoverageOptions> => {
@@ -30,9 +66,18 @@ export const loadConfig = (
 
   const expectedFiles = customPath
     ? [customPath]
-    : ['.nycrc', '.nycrc.json', '.nycrc.jsonc'];
+    : [
+        '.nycrc',
+        '.nycrc.json',
+        '.nycrc.jsonc',
+        '.nycrc.toml',
+        '.nycrc.yaml',
+        '.nycrc.yml',
+      ];
 
   for (const file of expectedFiles) {
+    if (isScript(file)) continue;
+
     const filePath = join(cwd, file);
 
     if (!existsSync(filePath)) continue;
@@ -40,7 +85,7 @@ export const loadConfig = (
     try {
       const content = readFileSync(filePath, 'utf8');
 
-      return mapKeys(JSONC.parse(content) as Record<string, unknown>);
+      return mapKeys(parseConfig(content, file));
     } catch {}
   }
 
