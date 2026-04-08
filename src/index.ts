@@ -63,6 +63,11 @@ export const coverage = (
 
     setup(context) {
       if (options.requireFlag && !process.argv.includes('--coverage')) return;
+      if (context.runtime !== 'node')
+        console.warn(
+          `[@pokujs/istanbul] Istanbul coverage is only supported on Node.js (current runtime: ${context.runtime}). Coverage data may not be collected.`
+        );
+
       enabled = true;
 
       const cliConfig = process.argv
@@ -70,13 +75,8 @@ export const coverage = (
         ?.split('=')[1];
 
       const fileConfig = loadConfig(context.cwd, cliConfig ?? options.config);
+
       options = { ...fileConfig, ...options };
-
-      if (context.runtime !== 'node')
-        console.warn(
-          `[@pokujs/istanbul] Istanbul coverage is only supported on Node.js (current runtime: ${context.runtime}). Coverage data may not be collected.`
-        );
-
       originalEnv = process.env.NODE_V8_COVERAGE;
       userProvidedTempDir = typeof options.tempDirectory === 'string';
 

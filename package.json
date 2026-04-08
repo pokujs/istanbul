@@ -26,7 +26,7 @@
   },
   "scripts": {
     "pretest": "npm run build",
-    "test": "poku test/e2e",
+    "test": "poku --sequential test/e2e",
     "prebuild": "rm -rf lib",
     "build": "tsc",
     "lint": "prettier --check .",
@@ -40,7 +40,9 @@
     "istanbul-lib-report": "^3.0.1",
     "istanbul-reports": "^3.2.0",
     "jsonc.min": "^1.1.2",
-    "v8-to-istanbul": "^9.3.0"
+    "toml.min": "^1.0.0",
+    "v8-to-istanbul": "^9.3.0",
+    "yaml.min": "^1.0.0"
   },
   "peerDependencies": {
     "poku": "^4.2.0"
