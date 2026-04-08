@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/pokujs/istanbul/compare/v1.0.1...v1.1.0) (2026-04-08)
+
+
+### Features
+
+* support for YAML and TOML config files ([#3](https://github.com/pokujs/istanbul/issues/3)) ([29b254e](https://github.com/pokujs/istanbul/commit/29b254e5fad6c11869810ebabe45d62d22d0507a))
+
 ## [1.0.1](https://github.com/pokujs/istanbul/compare/v1.0.0...v1.0.1) (2026-04-06)
 
 
